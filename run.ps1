@@ -1,1 +1,1 @@
-& "c:/Users/Bernie Conrad/projects/CivMatchup/.venv/Scripts/python.exe" "c:/Users/Bernie Conrad/projects/CivMatchup/matchup.py" 
+& ".venv/Scripts/python.exe" "matchup.py" -d

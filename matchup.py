@@ -22,14 +22,13 @@ import cv2
 logger = logging.getLogger(__name__)
 
 GAME_PATH = r"C:\Program Files (x86)\Steam\steamapps\common\Sid Meier's Civilization VI\Base\Binaries\Win64Steam\CivilizationVI_DX12.exe"
-# TODO: Make this configurable
-GAME_EXPORT_PATH = r"C:\Users\Bernie Conrad\Documents\My Games\Sid Meier's Civilization VI\GameSummary"
+GAME_EXPORT_PATH = os.path.join(os.path.expanduser("~"), "Documents", "My Games", "Sid Meier's Civilization VI", "GameSummary")
 OUTPUT_PATH = 'data.csv'
 SEC_LAUNCH_DELAY = 25
 SEC_ACTION_DELAY = 0.15
 SEC_POLLING_INTERVAL = 15
 SEC_RETURN_TO_MAIN_MENU = 10
-NUM_PLAYERS = 3
+NUM_PLAYERS = 4
 ID_SPECATOR = 0
 
 pipeline = keras_ocr.pipeline.Pipeline()
@@ -167,6 +166,7 @@ def run_game(window):
 
         if is_game_over(window):
             logger.info("End game detected, gathering winner information...")
+            time.sleep(SEC_LAUNCH_DELAY)
 
             # Determine which empire won and how
             victory = get_victory_type(window)
@@ -255,5 +255,5 @@ if __name__ == '__main__':
     window = attach_to_civ()
 
     while True:
-        # configure_game(window)
+        configure_game(window)
         run_game(window)

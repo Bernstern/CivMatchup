@@ -98,22 +98,43 @@ def take_screen_shot(window, bounds):
     img = ImageGrab.grab(bbox=bounds)
     return img
 
-def get_text_from_image(img):
+def get_text_from_image(window, bounds, show=False):
+    img = take_screen_shot(window, bounds)
+    if show:
+        img.show()
     img = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR) 
-    data = pipeline.recognize([img], verbose=None)
+    data = pipeline.recognize([img])
 
     # We don't care about the confidence or location, just return the text
     return [text for text, _ in data[0]]
 
 def get_turn_count(window):
     BOUNDS_TURN = (2317, 35, 2377, 45)
-    img = take_screen_shot(window, BOUNDS_TURN)
-    turn = get_text_from_image(img)
+    turn = get_text_from_image(window, BOUNDS_TURN)
 
     # In the case of the turn text, we can concatenate the text together and remove all non-numeric characters
     turn = ''.join(turn)
     turn = int(''.join(filter(str.isdigit, turn)))
     return turn
+
+def world_congress_pending(window):
+    # Checks to see if the phrase world congress is in the center of the screen indicating a normal or special session
+    BOX_SPECIAL_SESSIONS = (1115, 400, 1430, 500)
+    keywords = ['world', 'congress']
+    special_keywords = ['special', 'session']
+    special_sessions = set(get_text_from_image(window, BOX_SPECIAL_SESSIONS))
+    logger.debug(f"Pending wc sessions: {special_sessions}")
+    return all(keyword in special_sessions for keyword in keywords) or all(keyword in special_sessions for keyword in special_keywords)
+
+def world_congress_complete(window):
+    # Checks o tsee if world congress completei (! is read as i) is in the top of the screen indicating a session ended and we can continue
+    BOX_SESSIONS_COMPLETE = (1180, 40, 1750, 80)
+    keywords = ['world', 'congress', 'completei']
+    special_keywords = ['special', 'session', 'completei']
+    sessions_complete = get_text_from_image(window, BOX_SESSIONS_COMPLETE)
+    logger.debug(f"Sessions complete: {sessions_complete}")
+    return all(keyword in sessions_complete for keyword in keywords) or all(keyword in sessions_complete for keyword in special_keywords)
+
 
 def run_game(window):
     # For now we run the game for 5 minutes, every 5 seconds we shift enter + esc + shift enter to get out of a possible world congress prompt
@@ -125,20 +146,24 @@ def run_game(window):
             pydirectinput.moveTo(0, 0)
             window.set_focus()
 
-            # First check if there is a special session of the world congress
-            BOUNDS_END_GAME = (1000, 400, 1540, 480)
+            if world_congress_complete(window):
+                logger.info("World congress complete, escaping...")
+                window.set_focus()
+                pydirectinput.press('esc')
+                logger.info("Escaped")
 
-            turn = get_turn_count(window)
-            print(turn)
-            pbar.update(turn)
+            if world_congress_pending(window):
+                logger.info("World congress pending, skipping turn...")
+                window.set_focus()
+                pydirectinput.keyDown('shift')
+                pydirectinput.press('esc')
+                pydirectinput.press('enter')
+                pydirectinput.keyUp('shift')
+                logger.info("Skipped world congress")
+
             time.sleep(10)
 
         # time.sleep(5)
-        # pydirectinput.keyDown('shift')
-        # pydirectinput.press('enter')
-        # pydirectinput.press('esc')
-        # pydirectinput.press('enter')
-        # pydirectinput.keyUp('shift')
         # click_button_at_location(window, 1270, 440)
 
 

@@ -22,14 +22,13 @@ import cv2
 logger = logging.getLogger(__name__)
 
 GAME_PATH = r"C:\Program Files (x86)\Steam\steamapps\common\Sid Meier's Civilization VI\Base\Binaries\Win64Steam\CivilizationVI_DX12.exe"
-# TODO: Make this configurable
-GAME_EXPORT_PATH = r"C:\Users\Bernie Conrad\Documents\My Games\Sid Meier's Civilization VI\GameSummary"
+GAME_EXPORT_PATH = r"C:\Users\berni\OneDrive\Documents\My Games\Sid Meier's Civilization VI\GameSummary"
 OUTPUT_PATH = 'data.csv'
 SEC_LAUNCH_DELAY = 25
 SEC_ACTION_DELAY = 0.15
-SEC_POLLING_INTERVAL = 15
+SEC_POLLING_INTERVAL = 1
 SEC_RETURN_TO_MAIN_MENU = 10
-NUM_PLAYERS = 3
+NUM_PLAYERS = 2
 ID_SPECATOR = 0
 
 pipeline = keras_ocr.pipeline.Pipeline()
@@ -67,7 +66,7 @@ def configure_game(window):
     click_button_at_location(window, 1280, 630)
 
     # Click create game
-    click_button_at_location(window, 1420, 860)
+    click_button_at_location(window, 1420, 850)
 
     # Click advanced setup
     click_button_at_location(window, 1280, 1300)
@@ -167,18 +166,21 @@ def run_game(window):
 
         if is_game_over(window):
             logger.info("End game detected, gathering winner information...")
+            time.sleep(2)
+            click_button_at_location(window, 100, 100)
+            pydirectinput.press('esc')
 
             # Determine which empire won and how
             victory = get_victory_type(window)
-            winner = get_winner(window)
-            logger.info(f"Winner: {winner}, Victory: {victory}")
+            winner_empire = get_winner(window)
+            logger.info(f"Winner: {winner_empire}, Victory: {victory}")
 
             # First wipe the directory w/ previous exports
             for file in os.listdir(GAME_EXPORT_PATH):
                 os.remove(os.path.join(GAME_EXPORT_PATH, file))
 
             # Export the game
-            click_button_at_location(window, 1250, 1340)
+            click_button_at_location(window, 1250, 1310)
             time.sleep(SEC_ACTION_DELAY)
             click_button_at_location(window, 1250, 750)
 
@@ -195,16 +197,13 @@ def run_game(window):
             players = [player for player in export['Players'] if player['Id'] <= NUM_PLAYERS and player['Id'] != ID_SPECATOR]
 
             # Reduce the players list to just their leader name and adjective (needed to determine winner)
-            players = [{ 'Leader': player['LeaderName'], 'Adjective': player['CivilizationAdjective'].lower() } for player in players]
+            players = [{ 'Leader': player['LeaderName'], 'Empire': player['CivilizationDescription'].lower() } for player in players]
+            print(players)
 
-            # Confirm that the winner is in the players list
-            if winner not in [player['Adjective'] for player in players]:
-                raise RuntimeError(f"Winner {winner} not found in players list")
-            
-            winner = [player for player in players if player['Adjective'] == winner][0]
+            winner = [player for player in players if winner_empire in player["Empire"]][0]
             logger.debug(f"Winner: {winner}")
 
-            losers = [player for player in players if player['Adjective'] != winner['Adjective']]
+            losers = [player for player in players if winner_empire not in player["Empire"]]
             logger.debug(f"Losers: {losers}")
 
             # Create the output data
@@ -255,5 +254,5 @@ if __name__ == '__main__':
     window = attach_to_civ()
 
     while True:
-        # configure_game(window)
+        configure_game(window)
         run_game(window)

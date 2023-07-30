@@ -1,1 +1,1 @@
-& ".venv/Scripts/python.exe" "matchup.py" -d
+& ".venv/Scripts/python.exe" "matchup.py"

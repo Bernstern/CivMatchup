@@ -22,7 +22,7 @@ import cv2
 logger = logging.getLogger(__name__)
 
 GAME_PATH = r"C:\Program Files (x86)\Steam\steamapps\common\Sid Meier's Civilization VI\Base\Binaries\Win64Steam\CivilizationVI_DX12.exe"
-GAME_EXPORT_PATH = r"C:\Users\berni\OneDrive\Documents\My Games\Sid Meier's Civilization VI\GameSummary"
+GAME_EXPORT_PATH = os.path.join(os.path.expanduser("~"), "Documents", "My Games", "Sid Meier's Civilization VI", "GameSummary")
 OUTPUT_PATH = 'data.csv'
 SEC_LAUNCH_DELAY = 25
 SEC_ACTION_DELAY = 0.15
